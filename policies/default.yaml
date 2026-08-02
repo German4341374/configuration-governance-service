@@ -1,0 +1,34 @@
+required:
+  - path: app.name
+    environments: [development, staging, production]
+  - path: server.timeoutMs
+    environments: [development, staging, production]
+types:
+  - path: app.name
+    type: string
+  - path: app.debug
+    type: boolean
+  - path: server.timeoutMs
+    type: number
+  - path: transport.tls.enabled
+    type: boolean
+forbiddenValues:
+  - path: app.mode
+    values: [unsafe, unsupported]
+    environments: [development, staging, production]
+naming:
+  keyPattern: '^(?:[a-z][A-Za-z0-9]*|[A-Z][A-Z0-9_]*)$'
+production:
+  tls:
+    path: transport.tls.enabled
+    requiredValue: true
+  maximumTimeout:
+    path: server.timeoutMs
+    value: 30000
+  debugFlags:
+    - app.debug
+    - debug
+    - DEBUG
+  forbiddenHosts:
+    path: database.host
+    values: [localhost, 127.0.0.1, host.docker.internal]
