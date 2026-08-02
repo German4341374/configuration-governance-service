@@ -1,4 +1,4 @@
-FROM node:24.18.0-alpine3.23 AS dependencies
+FROM node:26.5.0-alpine3.23 AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -10,12 +10,12 @@ COPY scripts ./scripts
 COPY frontend ./frontend
 RUN npm run build
 
-FROM node:24.18.0-alpine3.23 AS production-dependencies
+FROM node:26.5.0-alpine3.23 AS production-dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-FROM node:24.18.0-alpine3.23 AS runtime
+FROM node:26.5.0-alpine3.23 AS runtime
 ENV NODE_ENV=production PORT=8080
 WORKDIR /app
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
