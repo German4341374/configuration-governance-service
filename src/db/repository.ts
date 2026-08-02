@@ -89,6 +89,16 @@ export class Repository {
         'SELECT COALESCE(MAX(revision_number), 0) + 1 AS next FROM config_revisions WHERE environment = $1',
         [input.environment]
       );
+      const duplicate = await client.query(
+        'SELECT 1 FROM config_revisions WHERE environment = $1 AND content_hash = $2',
+        [input.environment, input.contentHash]
+      );
+      if (duplicate.rowCount) {
+        throw new ConflictError(
+          'DUPLICATE_REVISION',
+          'This configuration content already exists in the environment'
+        );
+      }
       const id = randomUUID();
       try {
         await client.query(
@@ -102,10 +112,10 @@ export class Repository {
             numberResult.rows[0]?.next ?? 1,
             input.format,
             input.encryptedContent,
-            input.redactedContent,
+            JSON.stringify(input.redactedContent),
             input.contentHash,
             input.manifestSignature,
-            input.policyIssues,
+            JSON.stringify(input.policyIssues),
             input.createdBy,
             input.sourceRevisionId
           ]
@@ -265,6 +275,16 @@ export class Repository {
         'SELECT COALESCE(MAX(revision_number), 0) + 1 AS next FROM config_revisions WHERE environment = $1',
         [input.environment]
       );
+      const duplicate = await client.query(
+        'SELECT 1 FROM config_revisions WHERE environment = $1 AND content_hash = $2',
+        [input.environment, input.contentHash]
+      );
+      if (duplicate.rowCount) {
+        throw new ConflictError(
+          'DUPLICATE_PROMOTION',
+          'Equivalent configuration already exists in the target environment'
+        );
+      }
       const id = randomUUID();
       try {
         await client.query(
@@ -278,10 +298,10 @@ export class Repository {
             numberResult.rows[0]?.next ?? 1,
             input.format,
             input.encryptedContent,
-            input.redactedContent,
+            JSON.stringify(input.redactedContent),
             input.contentHash,
             input.manifestSignature,
-            input.policyIssues,
+            JSON.stringify(input.policyIssues),
             input.createdBy,
             input.sourceRevisionId
           ]
@@ -445,7 +465,7 @@ async function appendAudit(
       input.actor,
       input.resourceType,
       input.resourceId,
-      input.details,
+      JSON.stringify(input.details),
       previousHash,
       entryHash,
       createdAt

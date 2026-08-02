@@ -168,7 +168,7 @@ describe.skipIf(!databaseUrl)('PostgreSQL API workflow', () => {
       'editor'
     );
     const developmentId = uploaded.json<{ revision: { id: string } }>().revision.id;
-    await decide(developmentId, 'reviewer', 'approver');
+    expect((await decide(developmentId, 'reviewer', 'approver')).statusCode).toBe(200);
 
     const staging = await app.inject({
       method: 'POST',
@@ -201,6 +201,7 @@ describe.skipIf(!databaseUrl)('PostgreSQL API workflow', () => {
       'author',
       'editor'
     );
+    expect(uploaded.statusCode).toBe(201);
     const body = uploaded.json<{
       revision: { id: string; policyIssues: { code: string }[] };
     }>();
