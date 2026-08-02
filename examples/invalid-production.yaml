@@ -1,0 +1,12 @@
+app:
+  name: unsafe-api
+  debug: true
+  mode: unsafe
+server:
+  timeoutMs: 60000
+transport:
+  tls:
+    enabled: false
+database:
+  host: localhost
+  password: example-placeholder-only

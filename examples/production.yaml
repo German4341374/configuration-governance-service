@@ -1,0 +1,12 @@
+app:
+  name: support-api
+  debug: false
+  mode: safe
+server:
+  timeoutMs: 5000
+transport:
+  tls:
+    enabled: true
+database:
+  host: database.internal
+  password: example-placeholder-only

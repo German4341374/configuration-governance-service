@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality, PostgreSQL integration, and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18.4-alpine3.23
+        env:
+          POSTGRES_DB: governance_test
+          POSTGRES_USER: governance
+          POSTGRES_PASSWORD: local-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U governance -d governance_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql://governance:local-ci-password@127.0.0.1:5432/governance_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.18.0
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Check formatting
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck server and frontend
+        run: npm run typecheck
+      - name: Run unit and PostgreSQL integration tests
+        run: npm run test:coverage
+      - name: Build server and frontend
+        run: npm run build
+      - name: Validate a production configuration in CI mode
+        run: npm run cli -- validate --file examples/production.yaml --environment production --report ci-report.md
+      - name: Verify CI policy-failure exit code
+        shell: bash
+        run: |
+          set +e
+          npm run cli -- validate --file examples/invalid-production.yaml --environment production
+          status=$?
+          set -e
+          test "$status" -eq 2
+      - name: Upload coverage, report, and frontend artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: quality-artifacts
+          path: |
+            coverage/lcov.info
+            ci-report.md
+            frontend/dist/
+          if-no-files-found: warn
+          retention-days: 7
+
+  container-smoke:
+    name: Container workflow smoke test
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.18.0
+      - name: Generate ephemeral local environment
+        run: node scripts/setup-env.mjs
+      - name: Validate Compose model
+        run: docker compose config --quiet
+      - name: Build and start containers
+        run: docker compose up --detach --build --wait
+      - name: Run revision, approval, activation, rollback, and audit smoke test
+        run: bash scripts/demo.sh
+      - name: Capture logs
+        if: always()
+        run: docker compose logs --no-color > compose.log
+      - name: Upload container logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: compose-logs
+          path: compose.log
+          retention-days: 7
+      - name: Remove containers and volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans
