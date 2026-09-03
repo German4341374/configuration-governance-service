@@ -7,5 +7,5 @@ suggested mitigation when possible.
 Never include real configuration files, secrets, access tokens, database dumps, identity headers, or
 decrypted payloads in a report. Rotate any value that was accidentally disclosed before reporting.
 
-Security support covers the latest `main` commit. This portfolio project is not a managed service and
+Security support covers the latest `main` commit. This repository is not a managed service and
 does not provide an operational response-time guarantee.
