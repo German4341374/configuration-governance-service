@@ -18,5 +18,5 @@ severity `error` block approval and promotion. Upload is still allowed so review
 candidate failed.
 
 The policy file is deployment-owned. Review changes like source code because weakening a rule changes
-the governance boundary. Future improvements could version the policy hash on every revision and add
+the governance boundary. A later revision could version the policy hash on every revision and add
 JSON Schema, Rego, or CEL adapters.
