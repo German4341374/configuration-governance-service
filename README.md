@@ -3,14 +3,12 @@
 [![CI](https://github.com/German4341374/configuration-governance-service/actions/workflows/ci.yml/badge.svg)](https://github.com/German4341374/configuration-governance-service/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Configuration Governance Service is a compact control plane for reviewing configuration changes
-before they reach development, staging, or production. It accepts JSON, YAML, and `.env` input,
-creates immutable revisions, enforces environment-aware policies, separates approval from authoring,
-and records activation, promotion, and rollback in a tamper-evident audit chain.
+Upload a JSON, YAML, or .env file and see what changed before using it in another environment.
+Each upload becomes a saved revision that you can compare, review, approve, and promote.
+If a change goes wrong, you can make an earlier revision active again.
 
-The project demonstrates TypeScript backend and frontend development, PostgreSQL transactions,
-optimistic concurrency, encryption, policy-as-code, Docker, testing, and CI/CD without requiring a
-cloud account.
+Rules catch things like missing settings, debug flags in production, or an excessive timeout.
+The history keeps track of who changed what, and secret values are masked in the interface.
 
 ## Features
 
